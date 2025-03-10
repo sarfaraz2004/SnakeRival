@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game</title>
+    <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
+    <script defer src="https://pyscript.net/latest/pyscript.js"></script>
+    <style>
+        canvas {
+            border: 1px solid black;
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <py-script>
+        import js
+        from pyodide import create_proxy
+        import random
+
+        # Initialize canvas
+        canvas = js.document.getElementById("gameCanvas")
+        ctx = canvas.getContext("2d")
+
+        # Colors
+        white = "#FFFFFF"
+        yellow = "#FFFF66"
+        black = "#000000"
+        red = "#D53250"
+        green = "#00FF00"
+        blue = "#64C8FF"
+
+        # Display dimensions
+        display_width = 800
+        display_height = 600
+
+        # Snake speed
+        snake_speed = 15
+
+        # Snake block size
+        snake_block = 20
+
+        # Initialize snake
+        snake_list = [[display_width / 2, display_height / 2]]
+        x1_change = snake_block
+        y1_change = 0
+
+        # Food position
+        foodx = round(random.randrange(0, display_width - snake_block) / 20.0) * 20.0
+        foody = round(random.randrange(0, display_height - snake_block) / 20.0) * 20.0
+
+        # Bomb variables
+        bomb_position = None
+        bomb_spawned = False
+
+        # Score
+        score = 0
+
+        # Game state
+        game_over = False
+        game_close = False
+
+        # Username
+        username = "Player"
+
+        # Function to draw the snake
+        def draw_snake(snake_list):
+            for i, pos in enumerate(snake_list):
+                if i == 0:  # Head
+                    ctx.fillStyle = black
+                    ctx.beginPath()
+                    ctx.arc(pos[0] + 10, pos[1] + 10, 10, 0, 2 * 3.14159)
+                    ctx.fill()
+                elif i == len(snake_list) - 1:  # Tail
+                    ctx.fillStyle = green
+                    ctx.beginPath()
+                    ctx.arc(pos[0] + 10, pos[1] + 10, 10, 0, 2 * 3.14159)
+                    ctx.fill()
+                else:  # Body
+                    ctx.fillStyle = yellow
+                    ctx.beginPath()
+                    ctx.arc(pos[0] + 10, pos[1] + 10, 10, 0, 2 * 3.14159)
+                    ctx.fill()
+
+        # Function to display the score
+        def score_display(score, username):
+            ctx.fillStyle = yellow
+            ctx.font = "35px Comic Sans MS"
+            ctx.fillText(f"{username} - Score: {score}", 10, 30)
+
+        # Function to display a message
+        def message(msg, color):
+            ctx.fillStyle = color
+            ctx.font = "25px Bahnschrift"
+            ctx.fillText(msg, display_width / 6, display_height / 3)
+
+        # Function to handle keydown events
+        def on_keydown(event):
+            global x1_change, y1_change
+            if event.key == "ArrowLeft" and x1_change == 0:
+                x1_change = -snake_block
+                y1_change = 0
+            elif event.key == "ArrowRight" and x1_change == 0:
+                x1_change = snake_block
+                y1_change = 0
+            elif event.key == "ArrowUp" and y1_change == 0:
+                y1_change = -snake_block
+                x1_change = 0
+            elif event.key == "ArrowDown" and y1_change == 0:
+                y1_change = snake_block
+                x1_change = 0
+
+        # Attach the keydown event listener
+        js.document.addEventListener("keydown", create_proxy(on_keydown))
+
+        # Function to spawn a bomb
+        def spawn_bomb(score):
+            global bomb_position, bomb_spawned
+            if score >= 5 and (score - 5) % 2 == 0:
+                bomb_position = (round(random.randrange(0, display_width - snake_block) / 20.0) * 20.0,
+                                round(random.randrange(0, display_height - snake_block) / 20.0) * 20.0)
+                bomb_spawned = True
+
+        # Function to draw the bomb
+        def draw_bomb():
+            if bomb_spawned:
+                ctx.fillStyle = red
+                ctx.fillRect(bomb_position[0], bomb_position[1], snake_block, snake_block)
+
+        # Main game loop
+        def game_loop():
+            global x1, y1, x1_change, y1_change, snake_list, foodx, foody, score, game_over, game_close, bomb_spawned
+
+            if not game_over:
+                ctx.clearRect(0, 0, display_width, display_height)
+
+                x1 += x1_change
+                y1 += y1_change
+
+                if x1 >= display_width or x1 < 0 or y1 >= display_height or y1 < 0:
+                    game_close = True
+
+                if [x1, y1] in snake_list[1:]:
+                    game_close = True
+
+                if bomb_spawned and (x1, y1) == bomb_position:
+                    game_close = True
+
+                snake_list.insert(0, [x1, y1])
+                if x1 == foodx and y1 == foody:
+                    foodx = round(random.randrange(0, display_width - snake_block) / 20.0) * 20.0
+                    foody = round(random.randrange(0, display_height - snake_block) / 20.0) * 20.0
+                    score += 1
+                else:
+                    del snake_list[-1]
+
+                draw_snake(snake_list)
+                spawn_bomb(score)
+                draw_bomb()
+                score_display(score, username)
+
+                if game_close:
+                    message("You Lost! Press Q-Quit or C-Play Again", red)
+                    score_display(score, username)
+
+                js.requestAnimationFrame(create_proxy(game_loop))
+
+        # Start the game loop
+        game_loop()
+    </py-script>
+</body>
+</html>
