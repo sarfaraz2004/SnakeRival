@@ -1,4 +1,5 @@
 import pygame
+import asyncio
 import time
 import random
 import pyttsx3
@@ -108,7 +109,7 @@ def get_username():
 
     # Load the background image for the username input screen
     background_img = pygame.image.load("bg3.webp")  # Make sure this image exists in your folder
-    background_img = pygame.transform.scale(background_img , (display_width, display_height))
+    background_img = pygame.transform.scale(background_img, (display_width, display_height))
 
     # Font for the game name and input field text
     game_name_font = pygame.font.SysFont("comicsansms", 50)
@@ -205,7 +206,7 @@ def display_leaderboard():
 
 def spawn_bomb(score):
     global bomb_position, bomb_spawned
-    if score >= 5 and (score - 5) % 2 == 0:  # Spawn bomb every 2 scores after 5
+    if score >= 5 and (score - 5) % 2 == 0: 
         bomb_position = (round(random.randrange(0, display_width - snake_block) / 20.0) * 20.0,
                          round(random.randrange(0, display_height - snake_block) / 20.0) * 20.0)
         bomb_spawned = True
@@ -313,3 +314,4 @@ gameLoop()
 
 # Close the database connection when the game ends
 conn.close()
+asyncio.run(main())
